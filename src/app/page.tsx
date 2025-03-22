@@ -4,243 +4,354 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Hand } from "lucide-react";
 
-const suits = ["♠️", "♥️", "♦️", "♣️"];
-const values = [
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "J",
-  "Q",
-  "K",
-  "A",
-];
+//Constantes du jeu
 
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+const SUITS = ["♠️", "♥️", "♦️", "♣️"]; // Couleurs
+const CARD_VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]; // Valeurs des cartes
+
+// Fonctions utilitaires
+
+function shuffleDeck(deck: Array<{ suit: string; value: string }>) {
+  return deck.sort(() => Math.random() - 0.5);
 }
 
-function generateDeck() {
-  const deck = [];
-  suits.forEach((suit) => {
-    values.forEach((value) => {
-      deck.push({ suit, value });
+function createShuffledDeck() {
+  const newDeck: { suit: string; value: string }[] = [];
+  SUITS.forEach((suit) => {
+    CARD_VALUES.forEach((value) => {
+      newDeck.push({ suit, value });
     });
   });
-  return (shuffle(deck));
+  return shuffleDeck(newDeck);
 }
 
-function isOneValueApart(card1, card2) {
-  const index1 = values.indexOf(card1.value);
-  const index2 = values.indexOf(card2.value);
+function areCardsConsecutive(card1: { suit: string; value: string }, card2: { suit: string; value: string }) {
+  const index1 = CARD_VALUES.indexOf(card1.value);
+  const index2 = CARD_VALUES.indexOf(card2.value);
   return Math.abs(index1 - index2) === 1;
 }
 
+
 // Deck = Pioche (démarrage avec 13 cartes)
-// CommonPiles = Zone de 2 fois 4 cartes au centre de la table
+// commonTablePiles = Zone de 2 fois 4 cartes au centre de la table
 // Hand = Main du joueur
 // Discard = Défausse du joueur (vide au départ)
 
 export default function CrapetteGame() {
-  const [player1Deck, setPlayer1Deck] = useState([]);
-  const [player1Discard, setPlayer1Discard] = useState([]);
-  const [player1Hand, setPlayer1Hand] = useState([]);
-   
-  const [player2Deck, setPlayer2Deck] = useState([]);
-  const [player2Discard, setPlayer2Discard] = useState([]);
-  const [player2Hand, setPlayer2Hand] = useState([]);
+  const [player1DrawPile, setPlayer1DrawPile] = useState<{ suit: string; value: string }[]>([]);
+  const [player1DiscardPile, setPlayer1DiscardPile] = useState<{ suit: string; value: string }[]>([]);
+  const [player1Hand, setPlayer1Hand] = useState<{ suit: string; value: string }[]>([]);
+  
+  const [player2DrawPile, setPlayer2DrawPile] = useState<{ suit: string; value: string }[]>([]);
+  const [player2DiscardPile, setPlayer2DiscardPile] = useState<{ suit: string; value: string }[]>([]);
+  const [player2Hand, setPlayer2Hand] = useState<{ suit: string; value: string }[]>([]);
+  
+  const [sharedPiles, setSharedPiles] = useState<Array<Array<{ suit: string; value: string }>>>([[], [], [], [], [], [], [], []]);
+  const [sharedFoundationPiles, setSharedFoundationPiles] = useState<Array<Array<{ suit: string; value: string }>>>([[], [], [], [], [], [], [], []]);
+  
+  const [currentPlayer, setCurrentPlayer] = useState<number>(1);
+  const [gameWinner, setGameWinner] = useState<number | null>(null);
+  
+  const [currentlySelectedCardInfo, setcurrentlySelectedCardInfo] = useState<{ card: { suit: string; value: string }; zone: any } | null>(null);
+  const [isCardBeingSelected, setIsCardSelected] = useState(false);
 
-  const [commonPiles, setCommonPiles] = useState<Array<Array<any>>>([[], [], [], [],[], [], [], []]);
-  const [commonPacks, setCommonPacks] = useState<Array<Array<any>>>([[], [], [], [],[], [], [], []]);
-  const [turn, setTurn] = useState(1);
-  const [winner, setWinner] = useState(null);
+// Effets REACT
 
-  useEffect(() => {
-    const deck1 = generateDeck();
-    setPlayer1Deck(deck1.slice(0, 13));
-    setPlayer1Hand(deck1.slice(17, 52));
-    const ExtractDeck1 = deck1.slice(13, 17); // Extrait 4 cartes de deck1
-  
-    const deck2 = generateDeck();
-    setPlayer2Deck(deck2.slice(0, 13));
-    setPlayer2Hand(deck2.slice(17, 52));
-    const ExtractDeck2 = deck2.slice(13, 17); // Extrait 4 cartes de deck2
-  
-    setCommonPiles((prevPiles) => {
-      const newPiles = [...prevPiles];
-  
-      // Distribuer les 4 cartes de deck1 dans les 4 premières piles
-      for (let i = 0; i < 4; i++) {
-        newPiles[i] = [ExtractDeck1[i]];
-      }
-  
-      // Distribuer les 4 cartes de deck2 dans les 4 piles suivantes
-      for (let i = 4; i < 8; i++) {
-        newPiles[i] = [ExtractDeck2[i - 4]];
-      }
-  
-      return newPiles;
-    });
-  }, []);
+useEffect(() => {
+  const deck1 = createShuffledDeck();
+  setPlayer1DrawPile(deck1.slice(0, 13));
+  setPlayer1Hand(deck1.slice(17, 52));
+  const player1SharedCards = deck1.slice(13, 17);
 
-  useEffect(() => {
-    if (
-      player1Deck.length === 0 &&
-      player1Discard.length === 0 &&
-      player1Hand.length === 0
-    ) {
-      setWinner(1);
-    } else if (
-      player2Deck.length === 0 &&
-      player2Discard.length === 0 &&
-      player2Hand.length === 0
-    ) {
-      setWinner(2);
+  const deck2 = createShuffledDeck();
+  setPlayer2DrawPile(deck2.slice(0, 13));
+  setPlayer2Hand(deck2.slice(17, 52));
+  const player2SharedCards = deck2.slice(13, 17);
+
+  setSharedPiles((prev) => {
+    const updatedPiles = [...prev];
+    for (let i = 0; i < 4; i++) {
+      updatedPiles[i] = [player1SharedCards[i]];
     }
-  }, [player1Deck,  player1Discard, player1Hand, player2Deck,  player2Discard, player2Hand]);
-
-
-  const drawCard = (player) => {
-    if (winner) return;
-    if (player === 1 && player1Deck.length > 0) {
-      const newDeck = [...player1Deck];
-      const card = newDeck.pop();
-      setPlayer1Deck(newDeck);
-      setPlayer1Discard([...player1Discard, card]);
-      setTurn(2);
-    } else if (player === 2 && player2Deck.length > 0) {
-      const newDeck = [...player2Deck];
-      const card = newDeck.pop();
-      setPlayer2Deck(newDeck);
-      setPlayer2Discard([...player2Discard, card]);
-      setTurn(1);
+    for (let i = 4; i < 8; i++) {
+      updatedPiles[i] = [player2SharedCards[i - 4]];
     }
-  };
+    return updatedPiles;
+  });
+}, []);
 
-  const playHandCard = (player, index) => {
-    if (winner) return;
-    if (player === 1) {
-      const hand = [...player1Hand];
-      const card = hand.splice(index, 1)[0];
-      setPlayer1Discard([...player1Discard, card]);
-      setPlayer1Hand(hand);
-      setTurn(2);
+useEffect(() => {
+  const player1Empty = player1DrawPile.length === 0 && player1DiscardPile.length === 0 && player1Hand.length === 0;
+  const player2Empty = player2DrawPile.length === 0 && player2DiscardPile.length === 0 && player2Hand.length === 0;
+  
+  if (player1Empty) setGameWinner(1);
+  else if (player2Empty) setGameWinner(2);
+  else setGameWinner(null);
+}, [player1DrawPile, player1DiscardPile, player1Hand, player2DrawPile, player2DiscardPile, player2Hand]);
+
+// Fonctions de jeu
+
+const handleCardSelect = (card: { suit: string; value: string }, zone: { type: string; player?: number; index?: number }) => {
+  if (gameWinner || currentPlayer !== zone.player) return;
+
+  if (isCardBeingSelected && currentlySelectedCardInfo) {
+    handleCardPlacement({ card, zone });
+    return;
+  }
+
+  setcurrentlySelectedCardInfo({ card, zone });
+  setIsCardSelected(true);
+};
+
+const handleCardPlacement = (target: { card: { suit: string; value: string }; zone: { type: string; player?: number; index?: number } }) => {
+  if (!currentlySelectedCardInfo || !isCardBeingSelected) return;
+  let moveIsValid = false;
+
+  // Dépôt sur les fondations communes (commençant par As)
+  if (target.zone.type === 'sharedFoundationPiles') {
+    const foundationPile = target.zone.index !== undefined ? [...sharedFoundationPiles[target.zone.index]] : [];
+    if (foundationPile.length === 0 && currentlySelectedCardInfo.card.value === 'A') {
+      foundationPile.push(currentlySelectedCardInfo.card);
+      moveIsValid = true;
+    } else if (foundationPile.length > 0) {
+      const topCard = foundationPile[foundationPile.length - 1];
+      const topIndex = CARD_VALUES.indexOf(topCard.value);
+      const selectedIndex = CARD_VALUES.indexOf(currentlySelectedCardInfo.card.value);
+      if (topCard.suit === currentlySelectedCardInfo.card.suit && selectedIndex === topIndex + 1) {
+        foundationPile.push(currentlySelectedCardInfo.card);
+        moveIsValid = true;
+      }
+    }
+    if (moveIsValid) {
+      const updatedfoundationPiles = [...sharedFoundationPiles];
+      if (target.zone.index !== undefined) {
+        updatedfoundationPiles[target.zone.index] = foundationPile;
+      }
+      setSharedFoundationPiles(updatedfoundationPiles);
+    }
+  }
+
+  // Dépôt sur les piles communes (séquence ±1)
+  if (target.zone.type === 'sharedPiles') {
+    const pile = target.zone.index !== undefined ? [...sharedPiles[target.zone.index]] : [];
+    if (pile.length === 0) {
+      pile.push(currentlySelectedCardInfo.card);
+      moveIsValid = true;
     } else {
-      const hand = [...player2Hand];
-      const card = hand.splice(index, 1)[0];
-      setPlayer2Discard([...player2Discard, card]);
-      setPlayer2Hand(hand);
-      setTurn(1);
-    }
-  };
-
-  const playToCommonPile = (player, pileIndex, card) => {
-    if (winner) return;
-    const newCommonPiles = [...commonPiles];
-    if (newCommonPiles[pileIndex].length === 0 && card.value === "A") {
-      newCommonPiles[pileIndex].push(card);
-      if (player === 1) setPlayer1Hand(player1Hand.filter((c) => c !== card));
-      else setPlayer2Hand(player2Hand.filter((c) => c !== card));
-    } else if (newCommonPiles[pileIndex].length > 0) {
-      const topCard =
-        newCommonPiles[pileIndex][newCommonPiles[pileIndex].length - 1];
-      const indexTop = values.indexOf(topCard.value);
-      const indexCard = values.indexOf(card.value);
-      if (card.suit === topCard.suit && indexCard === indexTop + 1) {
-        newCommonPiles[pileIndex].push(card);
-        if (player === 1) setPlayer1Hand(player1Hand.filter((c) => c !== card));
-        else setPlayer2Hand(player2Hand.filter((c) => c !== card));
+      const topCard = pile[pile.length - 1];
+      const topIndex = CARD_VALUES.indexOf(topCard.value);
+      const selectedIndex = CARD_VALUES.indexOf(currentlySelectedCardInfo.card.value);
+      if (topCard.suit === currentlySelectedCardInfo.card.suit && Math.abs(selectedIndex - topIndex) === 1) {
+        pile.push(currentlySelectedCardInfo.card);
+        moveIsValid = true;
       }
     }
-    setCommonPiles(newCommonPiles);
-  };
+    if (moveIsValid) {
+      const updatedPiles = [...sharedPiles];
+      if (target.zone.index !== undefined) {
+        updatedPiles[target.zone.index] = pile;
+      }
+      setSharedPiles(updatedPiles);
+    }
+  }
+
+  // Défausse
+  if (target.zone.type === 'discardPile') {
+    if (target.zone.player === 1) {
+      setPlayer1DiscardPile([...player1DiscardPile, currentlySelectedCardInfo.card]);
+      moveIsValid = true;
+    } else {
+      setPlayer2DiscardPile([...player2DiscardPile, currentlySelectedCardInfo.card]);
+      moveIsValid = true;
+    }
+  }
+
+    // Pioche
+    if (target.zone.type === 'drawPile') {
+      if (target.zone.player === 1) {
+        const topDrawCard = player1DrawPile[player1DrawPile.length - 1];
+        if (areCardsConsecutive(topDrawCard, currentlySelectedCardInfo.card)) {
+          setPlayer1DrawPile(player1DrawPile.filter(c => c !== topDrawCard));
+          setPlayer1DiscardPile([...player1DiscardPile, topDrawCard]);
+          moveIsValid = true;
+        } else  {
+          const topDrawCard = player2DrawPile[player2DrawPile.length - 1];
+          if (areCardsConsecutive(topDrawCard, currentlySelectedCardInfo.card)) {
+            setPlayer2DrawPile(player2DrawPile.filter(c => c !== topDrawCard));
+            setPlayer2DiscardPile([...player2DiscardPile, topDrawCard]);
+            moveIsValid = true;
+          };
+      }
+    }
+  }
+  // Nettoyage de la zone source
+  if (moveIsValid) {
+    if (currentlySelectedCardInfo.zone.type === 'hand') {
+      if (currentlySelectedCardInfo.zone.player === 1) {
+        setPlayer1Hand(player1Hand.filter(c => c !== currentlySelectedCardInfo.card));
+      } else {
+        setPlayer2Hand(player2Hand.filter(c => c !== currentlySelectedCardInfo.card));
+      }
+    } else if (currentlySelectedCardInfo.zone.type === 'drawPile') {
+      if (currentlySelectedCardInfo.zone.player === 1) {
+        setPlayer1DrawPile(player1DrawPile.filter(c => c !== currentlySelectedCardInfo.card));
+      } else {
+        setPlayer2DrawPile(player2DrawPile.filter(c => c !== currentlySelectedCardInfo.card));
+      }
+    } else if (currentlySelectedCardInfo.zone.type === 'sharedPiles') {
+      const updatedPiles = [...sharedPiles];
+      updatedPiles[currentlySelectedCardInfo.zone.index] = updatedPiles[currentlySelectedCardInfo.zone.index].filter(c => c !== currentlySelectedCardInfo.card);
+      setSharedPiles(updatedPiles)
+     } else if (currentlySelectedCardInfo.zone.type === 'discardPile') {
+        if (currentlySelectedCardInfo.zone.player === 1) {
+          setPlayer1DiscardPile(player1DiscardPile.filter(c => c !== currentlySelectedCardInfo.card));
+        } else {
+          setPlayer2DiscardPile(player2DiscardPile.filter(c => c !== currentlySelectedCardInfo.card));
+        };
+    }
+
+    setcurrentlySelectedCardInfo(null);
+    setIsCardSelected(false);
+    setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+  }
+};
+
+// Affichage
 
   return (
     <div className="p-4 grid grid-cols-2 gap-4">
       <div className="flex flex-col items-center">
         <h2 className="text-xl mb-2">Joueur 1</h2>
         <Card className="mb-2">
-        <CardContent>Pioche: {player1Deck.length} cartes</CardContent>
-          <CardContent> {player1Deck.length > 0 ? `${player1Deck[player2Deck.length - 1].value} ${player1Deck[player1Deck.length - 1].suit}` : 'Vide'}</CardContent>
+          <CardContent>Pioche: {player1DrawPile.length} cartes</CardContent>
+          <Button
+        onClick={() => {
+          if (isCardBeingSelected && currentlySelectedCardInfo) {
+            // Si une carte est déjà sélectionnée, tenter de la placer
+            const index = 0; // Replace 0 with the appropriate value or logic to determine the index
+            handleCardPlacement({ card: currentlySelectedCardInfo.card, zone: { type: 'player1DrawPile', index } });
+          } else {
+            // Sinon, sélectionner la carte
+            if (player1DrawPile.length > 0) {
+              handleCardSelect(player1DrawPile[player1DrawPile.length - 1], { type: 'drawPile', player: 1  })
+            };
+          }
+        }}
+        disabled={!!gameWinner || (isCardBeingSelected && !currentlySelectedCardInfo)}
+      >
+        {player1DrawPile.length > 0 ? `${player1DrawPile[player1DrawPile.length - 1].value} ${player1DrawPile[player1DrawPile.length - 1].suit}` : 'Vide'}
+      </Button>
         </Card>
         <Card className="mb-2">
           <CardContent>Main: {player1Hand.length} cartes</CardContent>
-          <CardContent> {player1Hand.length > 0 ? `${player1Hand[player1Hand.length - 1].value} ${player1Hand[player1Hand.length - 1].suit}` : 'Vide'}</CardContent>
+          <div className="flex space-x-2 mt-2">
+          <Button onClick={() => handleCardSelect(player1Hand[player1Hand.length - 1], { type: 'hand', player: 1 })} disabled={currentPlayer !== 1 || player1Hand.length === 0 || !!gameWinner}>
+          {player1Hand.length > 0 ? `${player1Hand[player1Hand.length - 1].value} ${player1Hand[player1Hand.length - 1].suit}` : 'Vide'}
+              </Button>
+          </div>
         </Card>
         <Card className="mb-2">
-        <CardContent>Défausse: {player1Discard.length} cartes</CardContent>
-          <CardContent>Défausse: {player1Discard.length > 0 ? `${player1Discard[player1Discard.length - 1].value} ${player1Discard[player1Discard.length - 1].suit}` : 'Vide'}</CardContent>
+          <CardContent>Défausse: {player1DiscardPile.length} cartes</CardContent>
+          <Button onClick={() => currentlySelectedCardInfo && handleCardPlacement({
+            card: currentlySelectedCardInfo.card,
+            zone: { type: 'discard', player: 1 }
+          })} disabled={!!gameWinner}>
+          {player1DiscardPile.length > 0 ? `${player1DiscardPile[player1DiscardPile.length - 1].value} ${player1DiscardPile[player1DiscardPile.length - 1].suit}` : 'Vide'}
+          </Button>
         </Card>
-
-        <Button onClick={() => drawCard(1)} disabled={turn !== 1 || player1Deck.length === 0 || winner}>
-          Piocher
-        </Button>
       </div>
 
       <div className="flex flex-col items-center">
         <h2 className="text-xl mb-2">Joueur 2</h2>
         <Card className="mb-2">
-           <CardContent>Pioche: {player2Deck.length} cartes</CardContent>
-          <CardContent> {player2Deck.length > 0 ? `${player2Deck[player2Deck.length - 1].value} ${player2Deck[player2Deck.length - 1].suit}` : 'Vide'}</CardContent>
+          <CardContent>Pioche: {player2DrawPile.length} cartes</CardContent>
+          <Button onClick={() => handleCardSelect(player2DrawPile[player2DrawPile.length - 1], { type: 'drawPile', player: 2 })} disabled={currentPlayer !== 2 || player2DrawPile.length === 0 || !!gameWinner}>
+          {player2DrawPile.length > 0 ? `${player2DrawPile[player2DrawPile.length - 1].value} ${player2DrawPile[player2DrawPile.length - 1].suit}` : 'Vide'}
+          </Button>
         </Card>
         <Card className="mb-2">
           <CardContent>Main: {player2Hand.length} cartes</CardContent>
-          <CardContent> {player2Hand.length > 0 ? `${player2Hand[player2Hand.length - 1].value} ${player2Hand[player2Hand.length - 1].suit}` : 'Vide'}</CardContent>
+          <div className="flex space-x-2 mt-2">
+          <Button onClick={() => handleCardSelect(player2Hand[player2Hand.length - 1], { type: 'hand', player: 2 })} disabled={currentPlayer !== 2 || player2Hand.length === 0 || !!gameWinner}>
+          {player2Hand.length > 0 ? `${player2Hand[player2Hand.length - 1].value} ${player2Hand[player2Hand.length - 1].suit}` : 'Vide'}
+          </Button>
+          </div>
         </Card>
         <Card className="mb-2">
-        <CardContent>Défausse: {player2Discard.length} cartes</CardContent>
-          <CardContent>Défausse: {player2Discard.length > 0 ? `${player2Discard[player2Discard.length - 1].value} ${player2Discard[player2Discard.length - 1].suit}` : 'Vide'}</CardContent>
+          <CardContent>Défausse: {player2DiscardPile.length} cartes</CardContent>
+          <Button onClick={() => handleCardPlacement({ card: player2DiscardPile[player2DiscardPile.length - 1],
+             zone: { type: 'discard', player: 2 } })} disabled={currentPlayer !== 2 && player2DiscardPile.length === 0 || !!gameWinner}>
+          {player2DiscardPile.length > 0 ? `${player2DiscardPile[player2DiscardPile.length - 1].value} ${player2DiscardPile[player2DiscardPile.length - 1].suit}` : 'Vide'}
+          </Button>
         </Card>
-
-        <Button onClick={() => drawCard(2)} disabled={turn !== 2 || player2Deck.length === 0 || winner}>
-          Piocher
-        </Button>
       </div>
 
       <div className="col-span-2 flex justify-center mt-4">
+      <div className="grid grid-cols-4 gap-4">
+  {sharedPiles.map((pile, index) => (
+    <Card key={index} className="p-2 text-center">
+ <Button
+        onClick={() => {
+          if (isCardBeingSelected && currentlySelectedCardInfo) {
+            // Si une carte est déjà sélectionnée, tenter de la placer
+            handleCardPlacement({ card: currentlySelectedCardInfo.card, zone: { type: 'sharedPiles', index } });
+          } else {
+            // Sinon, sélectionner la carte
+            if (pile.length > 0) {
+              handleCardSelect(pile[pile.length - 1], { type: 'sharedPiles', index });
+            }
+          }
+        }}
+        disabled={!!gameWinner || (isCardBeingSelected && !currentlySelectedCardInfo)}
+      >
+        {pile.length > 0 ? `${pile[pile.length - 1].value} ${pile[pile.length - 1].suit}` : 'Vide'}
+      </Button>
+    </Card>
+  ))}
+</div>
+      </div>
+      <div className="col-span-2 flex justify-center mt-4">
         <div className="grid grid-cols-4 gap-4">
-          {commonPiles.map((pile, index) => (
+          {sharedFoundationPiles.map((pack, index) => (
             <Card key={index} className="p-2 text-center">
-              <CardContent>
-                {pile.length > 0 ? `${pile[pile.length - 1].value} ${pile[pile.length - 1].suit}` : 'Vide'}
-              </CardContent>
+ <Button
+        onClick={() => {
+          if (isCardBeingSelected && currentlySelectedCardInfo) {
+            // Si une carte est déjà sélectionnée, tenter de la placer
+            handleCardPlacement({ card: currentlySelectedCardInfo.card, zone: { type: 'sharedFoundationPiles', index } });
+            if (pack.length > 0) {
+              handleCardSelect(pack[pack.length - 1], { type: 'sharedFoundationPiles', index });
+            }
+            // Sinon, sélectionner la carte
+            if (pack.length > 0) {
+              handleCardSelect(pack[pack.length - 1], { type: 'sharedFoundationPiles', index });
+            }
+          }
+        }}
+        disabled={!!gameWinner || (isCardBeingSelected && !currentlySelectedCardInfo)}
+      >
+                {pack.length > 0 ? `${pack[pack.length - 1].value} ${pack[pack.length - 1].suit}` : 'Vide'}
+                </Button>
             </Card>
           ))}
         </div>
       </div>
 
       <motion.div
-        className="col-span-2 mt-4 text-center text-lg"
-        animate={{ opacity: 1 }}
-        initial={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {winner ? `Le Joueur ${winner} a gagné !` : `Tour du Joueur ${turn}`}
-      </motion.div>
+  className="col-span-2 mt-4 text-center text-lg"
+  animate={{ opacity: 1 }}
+  initial={{ opacity: 0 }}
+  transition={{ duration: 0.5 }}
+>
+  {gameWinner
+    ? `Le Joueur ${gameWinner} a gagné !`
+    : currentlySelectedCardInfo
+    ? `Sélectionnez une zone pour poser ${currentlySelectedCardInfo.card.value} ${currentlySelectedCardInfo.card.suit}`
+    : `Tour du Joueur ${currentPlayer}`}
+</motion.div>
 
-      <div>
-      <h3>données winner </h3>
-      winner : {winner}
-      Deck : {player1Deck.length}
-      Defausse : {player1Discard.length}
-      Main : {player1Hand.length}
-      <h3>Pioche joueur 1:</h3>
-        <pre>{JSON.stringify(player1Deck, null, 2)}</pre>
-
-      <h3>Main joueur 1:</h3>
-        <pre>{JSON.stringify(player1Hand, null, 2)}</pre>
-
-        <h3>Common Piles:</h3>
-        <pre>{JSON.stringify(commonPiles, null, 2)}</pre>
-      </div>
-    
     </div>
-    
   );
 }
