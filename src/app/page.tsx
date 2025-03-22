@@ -59,6 +59,7 @@ export default function CrapetteGame() {
   const [commonPiles, setCommonPiles] = useState<Array<Array<any>>>([[], [], [], [],[], [], [], []]);
   const [commonPacks, setCommonPacks] = useState<Array<Array<any>>>([[], [], [], [],[], [], [], []]);
   const [turn, setTurn] = useState(1);
+  const [winner, setWinner] = useState(null);
 
   useEffect(() => {
     const deck1 = generateDeck();
@@ -88,7 +89,25 @@ export default function CrapetteGame() {
     });
   }, []);
 
+  useEffect(() => {
+    if (
+      player1Deck.length === 0 &&
+      player1Discard.length === 0 &&
+      player1Hand.length === 0
+    ) {
+      setWinner(1);
+    } else if (
+      player2Deck.length === 0 &&
+      player2Discard.length === 0 &&
+      player2Hand.length === 0
+    ) {
+      setWinner(2);
+    }
+  }, [player1Deck,  player1Discard, player1Hand, player2Deck,  player2Discard, player2Hand]);
+
+
   const drawCard = (player) => {
+    if (winner) return;
     if (player === 1 && player1Deck.length > 0) {
       const newDeck = [...player1Deck];
       const card = newDeck.pop();
@@ -105,6 +124,7 @@ export default function CrapetteGame() {
   };
 
   const playHandCard = (player, index) => {
+    if (winner) return;
     if (player === 1) {
       const hand = [...player1Hand];
       const card = hand.splice(index, 1)[0];
@@ -121,6 +141,7 @@ export default function CrapetteGame() {
   };
 
   const playToCommonPile = (player, pileIndex, card) => {
+    if (winner) return;
     const newCommonPiles = [...commonPiles];
     if (newCommonPiles[pileIndex].length === 0 && card.value === "A") {
       newCommonPiles[pileIndex].push(card);
@@ -145,46 +166,19 @@ export default function CrapetteGame() {
       <div className="flex flex-col items-center">
         <h2 className="text-xl mb-2">Joueur 1</h2>
         <Card className="mb-2">
-          <CardContent>Pile: {player1Hand.length} cartes 
-          {player1Hand.length > 0
-          ? `${player1Hand[player1Hand.length - 1].value}
-                  ${player1Hand[player1Hand.length - 1].suit}`
-                  : "Vide"}
-                   </CardContent>`
+        <CardContent>Pioche: {player1Deck.length} cartes</CardContent>
+          <CardContent> {player1Deck.length > 0 ? `${player1Deck[player2Deck.length - 1].value} ${player1Deck[player1Deck.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
         <Card className="mb-2">
-          <CardContent>
-            Défausse:{" "}
-            {player1Discard.length > 0
-              ? `${player1Discard[player1Discard.length - 1].value} ${
-                  player1Discard[player1Discard.length - 1].suit
-                }`
-              : "Vide"}
-          </CardContent>
+          <CardContent>Main: {player1Hand.length} cartes</CardContent>
+          <CardContent> {player1Hand.length > 0 ? `${player1Hand[player1Hand.length - 1].value} ${player1Hand[player1Hand.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
         <Card className="mb-2">
-          <CardContent>Pioche: {player1Deck.length} cartes 
-          {player1Deck.length > 0
-          ? `${player1Deck[player1Deck.length - 1].value}
-                  ${player1Deck[player1Deck.length - 1].suit}`
-                  : "Vide"}
-                   </CardContent>`
+        <CardContent>Défausse: {player1Discard.length} cartes</CardContent>
+          <CardContent>Défausse: {player1Discard.length > 0 ? `${player1Discard[player1Discard.length - 1].value} ${player1Discard[player1Discard.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
-        <div className="flex space-x-2 mb-2">
-          {player1Hand.map((card, index) => (
-            <Button
-              key={index}
-              onClick={() => playHandCard(1, index)}
-              disabled={turn !== 1}
-            >
-              {card.value} {card.suit}
-            </Button>
-          ))}
-        </div>
-        <Button
-          onClick={() => drawCard(1)}
-          disabled={turn !== 1 || player1Deck.length === 0}
-        >
+
+        <Button onClick={() => drawCard(1)} disabled={turn !== 1 || player1Deck.length === 0 || winner}>
           Piocher
         </Button>
       </div>
@@ -192,46 +186,19 @@ export default function CrapetteGame() {
       <div className="flex flex-col items-center">
         <h2 className="text-xl mb-2">Joueur 2</h2>
         <Card className="mb-2">
-        <CardContent>Pile: {player2Hand.length} cartes 
-          {player2Hand.length > 0
-          ? `${player2Hand[player2Hand.length - 1].value}
-                  ${player2Hand[player2Hand.length - 1].suit}`
-                  : "Vide"}
-                   </CardContent>`
+           <CardContent>Pioche: {player2Deck.length} cartes</CardContent>
+          <CardContent> {player2Deck.length > 0 ? `${player2Deck[player2Deck.length - 1].value} ${player2Deck[player2Deck.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
         <Card className="mb-2">
-          <CardContent>
-            Défausse:{" "}
-            {player2Discard.length > 0
-              ? `${player2Discard[player2Discard.length - 1].value} ${
-                  player2Discard[player2Discard.length - 1].suit
-                }`
-              : "Vide"}
-          </CardContent>
+          <CardContent>Main: {player2Hand.length} cartes</CardContent>
+          <CardContent> {player2Hand.length > 0 ? `${player2Hand[player2Hand.length - 1].value} ${player2Hand[player2Hand.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
         <Card className="mb-2">
-          <CardContent>Pioche: {player2Deck.length} cartes 
-          {player2Deck.length > 0
-          ? `${player2Deck[player2Deck.length - 1].value}
-                  ${player2Deck[player2Deck.length - 1].suit}`
-                  : "Vide"}
-                   </CardContent>`
+        <CardContent>Défausse: {player2Discard.length} cartes</CardContent>
+          <CardContent>Défausse: {player2Discard.length > 0 ? `${player2Discard[player2Discard.length - 1].value} ${player2Discard[player2Discard.length - 1].suit}` : 'Vide'}</CardContent>
         </Card>
-        <div className="flex space-x-2 mb-2">
-          {player2Hand.map((card, index) => (
-            <Button
-              key={index}
-              onClick={() => playHandCard(2, index)}
-              disabled={turn !== 2}
-            >
-              {card.value} {card.suit}
-            </Button>
-          ))}
-        </div>
-        <Button
-          onClick={() => drawCard(2)}
-          disabled={turn !== 2 || player2Deck.length === 0}
-        >
+
+        <Button onClick={() => drawCard(2)} disabled={turn !== 2 || player2Deck.length === 0 || winner}>
           Piocher
         </Button>
       </div>
@@ -241,11 +208,7 @@ export default function CrapetteGame() {
           {commonPiles.map((pile, index) => (
             <Card key={index} className="p-2 text-center">
               <CardContent>
-                {pile.length > 0
-                  ? `${pile[pile.length - 1].value} ${
-                      pile[pile.length - 1].suit
-                    }`
-                  : "Vide"}
+                {pile.length > 0 ? `${pile[pile.length - 1].value} ${pile[pile.length - 1].suit}` : 'Vide'}
               </CardContent>
             </Card>
           ))}
@@ -258,9 +221,15 @@ export default function CrapetteGame() {
         initial={{ opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        Tour du Joueur {turn}
+        {winner ? `Le Joueur ${winner} a gagné !` : `Tour du Joueur ${turn}`}
       </motion.div>
+
       <div>
+      <h3>données winner </h3>
+      winner : {winner}
+      Deck : {player1Deck.length}
+      Defausse : {player1Discard.length}
+      Main : {player1Hand.length}
       <h3>Pioche joueur 1:</h3>
         <pre>{JSON.stringify(player1Deck, null, 2)}</pre>
 
