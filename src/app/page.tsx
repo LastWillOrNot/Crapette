@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Hand } from "lucide-react";
 
-//Constantes du jeu
 
+//Constantes du jeu
 const SUITS = ["♠️", "♥️", "♦️", "♣️"]; // Couleurs
 const CARD_VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]; // Valeurs des cartes
 
-// Fonctions utilitaires
+
+// Fonctions utilitaires du jeu
 
 function shuffleDeck(deck: Array<{ suit: string; value: string }>) {
   return deck.sort(() => Math.random() - 0.5);
@@ -33,6 +34,12 @@ function areCardsConsecutive(card1: { suit: string; value: string }, card2: { su
   return Math.abs(index1 - index2) === 1;
 }
 
+function areCardsColorDifferent(card1: { suit: string; value: string }, card2: { suit: string; value: string }) {
+  const RED = ["♥️", "♦️"];
+  return RED.includes(card1.suit) !== RED.includes(card2.suit);
+}
+
+
 
 // Deck = Pioche (démarrage avec 13 cartes)
 // commonTablePiles = Zone de 2 fois 4 cartes au centre de la table
@@ -51,7 +58,7 @@ export default function CrapetteGame() {
   const [sharedPiles, setSharedPiles] = useState<Array<Array<{ suit: string; value: string }>>>([[], [], [], [], [], [], [], []]);
   const [sharedFoundationPiles, setSharedFoundationPiles] = useState<Array<Array<{ suit: string; value: string }>>>([[], [], [], [], [], [], [], []]);
   
-  const [currentPlayer, setCurrentPlayer] = useState<number>(1);
+  const [currentPlayer, setCurrentPlayer] = useState<number>();
   const [gameWinner, setGameWinner] = useState<number | null>(null);
   
   const [currentlySelectedCardInfo, setcurrentlySelectedCardInfo] = useState<{ card: { suit: string; value: string }; zone: any } | null>(null);
@@ -91,15 +98,21 @@ useEffect(() => {
   else setGameWinner(null);
 }, [player1DrawPile, player1DiscardPile, player1Hand, player2DrawPile, player2DiscardPile, player2Hand]);
 
+//Désignation du joueur qui démarrera la partie
+useEffect(() => {
+  setCurrentPlayer(Math.random() < 0.5 ? 1 : 2);
+}
+);
+
 // Fonctions de jeu
 
 const handleCardSelect = (card: { suit: string; value: string }, zone: { type: string; player?: number; index?: number }) => {
-  if (gameWinner || currentPlayer !== zone.player) return;
+  if (gameWinner) return;
 
-  if (isCardBeingSelected && currentlySelectedCardInfo) {
-    handleCardPlacement({ card, zone });
-    return;
-  }
+//  if (isCardBeingSelected && currentlySelectedCardInfo) {
+//    handleCardPlacement({ card, zone });
+//    return;
+//  }
 
   setcurrentlySelectedCardInfo({ card, zone });
   setIsCardSelected(true);
@@ -143,7 +156,7 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
       const topCard = pile[pile.length - 1];
       const topIndex = CARD_VALUES.indexOf(topCard.value);
       const selectedIndex = CARD_VALUES.indexOf(currentlySelectedCardInfo.card.value);
-      if (topCard.suit === currentlySelectedCardInfo.card.suit && Math.abs(selectedIndex - topIndex) === 1) {
+      if (areCardsColorDifferent(topCard, currentlySelectedCardInfo.card) && Math.abs(selectedIndex - topIndex) === 1) {
         pile.push(currentlySelectedCardInfo.card);
         moveIsValid = true;
       }
@@ -170,19 +183,21 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
 
     // Pioche
     if (target.zone.type === 'drawPile') {
-      if (target.zone.player === 1) {
+      if (target.zone.player === 1 && currentPlayer === 2) {
         const topDrawCard = player1DrawPile[player1DrawPile.length - 1];
         if (areCardsConsecutive(topDrawCard, currentlySelectedCardInfo.card)) {
           setPlayer1DrawPile(player1DrawPile.filter(c => c !== topDrawCard));
           setPlayer1DiscardPile([...player1DiscardPile, topDrawCard]);
           moveIsValid = true;
-        } else  {
+        } else if (target.zone.player === 2 && currentPlayer === 1) {
           const topDrawCard = player2DrawPile[player2DrawPile.length - 1];
           if (areCardsConsecutive(topDrawCard, currentlySelectedCardInfo.card)) {
             setPlayer2DrawPile(player2DrawPile.filter(c => c !== topDrawCard));
             setPlayer2DiscardPile([...player2DiscardPile, topDrawCard]);
             moveIsValid = true;
           };
+      } else {
+        moveIsValid = false;
       }
     }
   }
@@ -210,13 +225,18 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
         } else {
           setPlayer2DiscardPile(player2DiscardPile.filter(c => c !== currentlySelectedCardInfo.card));
         };
+        if ((currentPlayer === 1 && currentlySelectedCardInfo.zone.player === 1)||(currentPlayer === 2 && currentlySelectedCardInfo.zone.player === 2)) {
+            setCurrentPlayer(currentPlayer === 1 ? 2 : 1);;
+        };
     }
 
     setcurrentlySelectedCardInfo(null);
     setIsCardSelected(false);
-    setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+//    setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
   }
 };
+
+
 
 // Affichage
 
@@ -228,14 +248,14 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
           <CardContent>Pioche: {player1DrawPile.length} cartes</CardContent>
           <Button
         onClick={() => {
-          if (isCardBeingSelected && currentlySelectedCardInfo) {
+          if (isCardBeingSelected && currentlySelectedCardInfo && currentPlayer === 2) {
             // Si une carte est déjà sélectionnée, tenter de la placer
-            const index = 0; // Replace 0 with the appropriate value or logic to determine the index
+            const index = 1; // Replace 0 with the appropriate value or logic to determine the index
             handleCardPlacement({ card: currentlySelectedCardInfo.card, zone: { type: 'player1DrawPile', index } });
           } else {
             // Sinon, sélectionner la carte
             if (player1DrawPile.length > 0) {
-              handleCardSelect(player1DrawPile[player1DrawPile.length - 1], { type: 'drawPile', player: 1  })
+              handleCardSelect(player1DrawPile[player1DrawPile.length - 1],{ type: 'drawPile', player: 1  })
             };
           }
         }}
@@ -247,17 +267,26 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
         <Card className="mb-2">
           <CardContent>Main: {player1Hand.length} cartes</CardContent>
           <div className="flex space-x-2 mt-2">
-          <Button onClick={() => handleCardSelect(player1Hand[player1Hand.length - 1], { type: 'hand', player: 1 })} disabled={currentPlayer !== 1 || player1Hand.length === 0 || !!gameWinner}>
+          <Button onClick={() => {
+            if (isCardBeingSelected && currentlySelectedCardInfo) {
+            } else {
+              handleCardSelect(player1Hand[player1Hand.length - 1], { type: 'hand', player: 1 });
+            }}}
+             disabled={currentPlayer !== 1 || player1Hand.length === 0 || !!gameWinner}>
           {player1Hand.length > 0 ? `${player1Hand[player1Hand.length - 1].value} ${player1Hand[player1Hand.length - 1].suit}` : 'Vide'}
               </Button>
           </div>
         </Card>
         <Card className="mb-2">
           <CardContent>Défausse: {player1DiscardPile.length} cartes</CardContent>
-          <Button onClick={() => currentlySelectedCardInfo && handleCardPlacement({
+          <Button onClick={() => {
+            if (isCardBeingSelected && currentlySelectedCardInfo) {
+          currentlySelectedCardInfo && handleCardPlacement({
             card: currentlySelectedCardInfo.card,
             zone: { type: 'discard', player: 1 }
-          })} disabled={!!gameWinner}>
+          })}
+         }}
+          disabled={!!gameWinner}>
           {player1DiscardPile.length > 0 ? `${player1DiscardPile[player1DiscardPile.length - 1].value} ${player1DiscardPile[player1DiscardPile.length - 1].suit}` : 'Vide'}
           </Button>
         </Card>
@@ -267,14 +296,25 @@ const handleCardPlacement = (target: { card: { suit: string; value: string }; zo
         <h2 className="text-xl mb-2">Joueur 2</h2>
         <Card className="mb-2">
           <CardContent>Pioche: {player2DrawPile.length} cartes</CardContent>
-          <Button onClick={() => handleCardSelect(player2DrawPile[player2DrawPile.length - 1], { type: 'drawPile', player: 2 })} disabled={currentPlayer !== 2 || player2DrawPile.length === 0 || !!gameWinner}>
+          <Button onClick={() => {
+            if (isCardBeingSelected && currentlySelectedCardInfo && currentPlayer === 1) {
+              currentlySelectedCardInfo && handleCardPlacement({
+                card: currentlySelectedCardInfo.card,
+                zone: { type: 'drawPile', player: 2 }
+              })
+            } else {
+              handleCardSelect(player2DrawPile[player2DrawPile.length - 1], 
+            { type: 'drawPile', player: 2 })}
+              }}
+             disabled={currentPlayer !== 2 || player2DrawPile.length === 0 || !!gameWinner}>
           {player2DrawPile.length > 0 ? `${player2DrawPile[player2DrawPile.length - 1].value} ${player2DrawPile[player2DrawPile.length - 1].suit}` : 'Vide'}
           </Button>
         </Card>
         <Card className="mb-2">
           <CardContent>Main: {player2Hand.length} cartes</CardContent>
           <div className="flex space-x-2 mt-2">
-          <Button onClick={() => handleCardSelect(player2Hand[player2Hand.length - 1], { type: 'hand', player: 2 })} disabled={currentPlayer !== 2 || player2Hand.length === 0 || !!gameWinner}>
+          <Button onClick={() => handleCardSelect(player2Hand[player2Hand.length - 1], 
+            { type: 'hand', player: 2 })} disabled={currentPlayer !== 2 || player2Hand.length === 0 || !!gameWinner}>
           {player2Hand.length > 0 ? `${player2Hand[player2Hand.length - 1].value} ${player2Hand[player2Hand.length - 1].suit}` : 'Vide'}
           </Button>
           </div>
