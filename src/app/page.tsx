@@ -13,8 +13,8 @@ import { canPlaceOnFoundation, canPlaceOnShared, canPlaceOnDrawPile, canPlaceOnD
 export default function CrapetteGame() {
   const [gameState, setGameState] = useState<GameState>({
     players: [
-      { drawPile: [], hand: [], discardPile: [] },
-      { drawPile: [], hand: [], discardPile: [] }
+      { drawPile: [], hand: [], discardPile: [],isActive: false },
+      { drawPile: [], hand: [], discardPile: [],isActive: false }
     ],
     sharedPiles: [[], [], [], [], [], [], [], []],
     sharedFoundationPiles: [[], [], [], [], [], [], [], []],
@@ -42,8 +42,8 @@ export default function CrapetteGame() {
     setGameState(prev => ({
       ...prev,
       players: [
-        { drawPile: initPlayers[0].drawPile, hand: initPlayers[0].hand, discardPile: [] },
-        { drawPile: initPlayers[1].drawPile, hand: initPlayers[1].hand, discardPile: [] },
+        { drawPile: initPlayers[0].drawPile, hand: initPlayers[0].hand, discardPile: [],isActive: false },
+        { drawPile: initPlayers[1].drawPile, hand: initPlayers[1].hand, discardPile: [],isActive: false },
       ]
     }));
 
@@ -67,6 +67,7 @@ export default function CrapetteGame() {
     } else {
       const comparison2 = compareSuitsCards(initPlayers[0].topHandCard, initPlayers[1].topHandCard);
       firstPlayer = comparison2 > 0 ? 2 : comparison2 < 0 ? 1 : Math.floor(Math.random() * 2) + 1;
+
     }
 
     setGameState(prev => ({
@@ -77,17 +78,27 @@ export default function CrapetteGame() {
     setIsGameInitialized(true);
   }, []);
 
+  // Mise à jour de l'état du joueur actif
+  useEffect(() => {
+    if (!isGameInitialized || !gameState.currentPlayer) return;
+    gameState.players[gameState.currentPlayer - 1].isActive = true;
+  }, [gameState.currentPlayer]);
+
+  
+
   // Après le déplacement de la dernière carte de la main, les cartes de la défausse sont déplacées dans la main
   useEffect(() => {
-    if (!isGameInitialized) return;
-    if (gameState.currentPlayer && gameState.players[gameState.currentPlayer - 1].hand.length === 0) {
-      const newState = JSON.parse(JSON.stringify(gameState));
-      newState.players[gameState.currentPlayer - 1].hand = gameState.players[gameState.currentPlayer - 1].discardPile;
-      newState.players[gameState.currentPlayer - 1].discardPile = [];
-      setGameState(newState);
+    if (!isGameInitialized || !gameState.currentPlayer) return;
+      const player = gameState.players[gameState.currentPlayer - 1];
+      console.log(`Vérification de la longueur de la main du joueur ${gameState.currentPlayer} : ${player.hand.length}`);	
+    if (player.hand.length === 0 && player.discardPile.length > 0) {
+        const newState = JSON.parse(JSON.stringify(gameState));
+        newState.players[gameState.currentPlayer - 1].hand = newState.players[gameState.currentPlayer - 1].discardPile.reverse();
+        newState.players[gameState.currentPlayer - 1].discardPile = [];
+        setGameState(newState);
+        console.log("Main remplie depuis la défausse !");
     }
-
-  }, [gameState.players]);
+}, [gameState.currentPlayer !== undefined ? gameState.players[gameState.currentPlayer - 1]?.hand : null]);
 
   // Détection du gagnant
   useEffect(() => {
@@ -107,9 +118,39 @@ export default function CrapetteGame() {
     }
   }, [gameState.players, isGameInitialized]);
 
+  // Détection d 'un état de crapette
+  // Prioriré 1 : remplissage des zones des paquets
+  // Priorité 2 : libération d'un espace libre
+
+  //useEffect(() => {
+  //  const isCrapette = false;
+  //  if (!isGameInitialized) return;
+
+    // Nombre d'espace vide
+  //  let SpacePlaceCount = 0;
+  //  for (let i = 0; i < 8; i++) {
+  //    if (gameState.sharedPiles[i].length === 0) {
+  //      SpacePlaceCount++;
+  //    }
+  //  }
+    // Liste les cartes disponibles pour un déplacement
+  //  const AvailableCards: Card[] = [];
+  //  for (let i = 0; i < 8; i++) {
+  //    if (gameState.sharedPiles[i].length > 0) {
+  //      AvailableCards.push(gameState.sharedPiles[i].slice(-1)[0]);
+  //    }
+  //  }
+
+    // Liste des cartes foundations
+  //  const foundationCards = gameState.sharedFoundationPiles.map(pile => pile.length > 0 ? pile.slice(-1)[0] : null);
+
+  //}, []);
+
+
   const handleSelectCard = (source: CardSource) => {
     if (source.type === "shared") {
       // Gestion pile partagée
+      if (gameState.sharedPiles[source.index].length === 0) return;
       const card = gameState.sharedPiles[source.index]?.slice(-1)[0];
       setCurrentlySelectedCardInfo({ card, source });
     } else {
@@ -136,14 +177,21 @@ export default function CrapetteGame() {
     let targetPile: Card[] = [];
     if (targetZone === 'foundation' && index !== null) {
         targetPile = newState.sharedFoundationPiles[index];
+        console.log(`Tentative de déplacement de ${card.value} ${card.suit} vers une FoundationPile`);
         moveIsValid = canPlaceOnFoundation(card, targetPile);
+        console.log(`Déplacement valide ? ${moveIsValid}`);
     } else if (targetZone === 'shared' && index !== null) {
         targetPile = newState.sharedPiles[index];
+        console.log(`Tentative de déplacement de ${card.value} ${card.suit} vers une SharedPile`);
         moveIsValid = canPlaceOnShared(card, targetPile);
+        console.log(`Déplacement valide ? ${moveIsValid}`);
     } else if (targetZone === 'drawPile' && gameState.currentPlayer && playerTarget) {
+        console.log(`Tentative de déplacement de ${card.value} ${card.suit} vers la DrawPile du Joueur ${playerTarget}`);
         targetPile = newState.players[playerTarget - 1].drawPile;
         moveIsValid = canPlaceOnDrawPile(card, targetPile);
+        console.log(`Déplacement valide ? ${moveIsValid}`);
     } else if (targetZone === 'discard' && gameState.currentPlayer && playerTarget) {
+      console.log(`Tentative de déplacement vers la défausse du joueur ${playerTarget}`);
       targetPile = newState.players[playerTarget - 1].discardPile;
       if (playerTarget === gameState.currentPlayer) {
         // Permettre de placer n'importe quelle carte sur sa défausse
@@ -152,6 +200,7 @@ export default function CrapetteGame() {
         // Permettre de placer une carte sur la défausse adverse si elle respecte les règles
         moveIsValid =canPlaceOnDiscard(card, targetPile);
           }
+      console.log(`Déplacement valide ? ${moveIsValid}`);
     }
     
     if (moveIsValid) {
@@ -191,34 +240,10 @@ export default function CrapetteGame() {
   };
 
   return (
-    <div className="p-4 grid grid-cols-2 gap-4">
-      {gameState.players.map((player, idx) => (
-      <PlayerArea
-        key={`player-${idx}`}
-        player={gameState.players[idx]}
-        playerIndex={idx}
-        currentPlayer={gameState.currentPlayer}
-        gameWinner={gameState.gameWinner}
-        currentlySelectedCard={currentlySelectedCardInfo}
-        onSelectCard={handleSelectCard}
-        onAttemptMove={attemptMove}
-      />
-      ))}
+    <div>
+  <div className="flex justify-center min-h-screen bg-gray-100 p-4">
 
-      <SharedPilesArea 
-        sharedPiles={gameState.sharedPiles}
-        gameWinner={gameState.gameWinner}
-        currentlySelectedCard={currentlySelectedCardInfo}
-        onSelectCard={(source) => handleSelectCard(source)}
-        onAttemptMove={attemptMove}
-      />
-
-      <FoundationPilesArea
-        sharedFoundationPiles={gameState.sharedFoundationPiles}
-        gameWinner={gameState.gameWinner}
-        onAttemptMove={attemptMove}
-      />
-
+      {/* État du jeu */}
       <motion.div
         className="col-span-2 mt-4 text-center text-lg"
         animate={{ opacity: 1 }}
@@ -233,6 +258,56 @@ export default function CrapetteGame() {
               : `Tour du Joueur ${gameState.currentPlayer}`
             : `Détermination du premier joueur...`}
       </motion.div>
-    </div>
+      </div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
+
+
+      {/* Joueur 1 */}
+      <div className="flex flex-col p-4 w-1/4 rounded-lg"
+           style={{ backgroundColor: gameState.currentPlayer === 1 ? "#FFEB3B" : "#E0E0E0" }}>
+        <PlayerArea
+          player={gameState.players[0]}
+          playerIndex={0}
+          currentPlayer={gameState.currentPlayer}
+          gameWinner={gameState.gameWinner}
+          currentlySelectedCard={currentlySelectedCardInfo}
+          onSelectCard={handleSelectCard}
+          onAttemptMove={attemptMove}
+        />
+      </div>
+
+      {/* Zone partagée */}
+      <div className="flex flex-col p-6 mx-4 w-1/3 rounded-lg bg-green-300">
+        <h2 className="text-center font-bold">Partagé</h2>
+        <SharedPilesArea 
+          sharedPiles={gameState.sharedPiles}
+          gameWinner={gameState.gameWinner}
+          currentlySelectedCard={currentlySelectedCardInfo}
+          onSelectCard={(source) => handleSelectCard(source)}
+          onAttemptMove={attemptMove}
+        />
+        <h2 className="text-center font-bold mt-4">Foundation</h2>
+        <FoundationPilesArea
+          sharedFoundationPiles={gameState.sharedFoundationPiles}
+          gameWinner={gameState.gameWinner}
+          onAttemptMove={attemptMove}
+        />
+      </div>
+
+      {/* Joueur 2 */}
+      <div className="flex flex-col p-4 w-1/4 rounded-lg"
+           style={{ backgroundColor: gameState.currentPlayer === 2 ? "#FFEB3B" : "#E0E0E0" }}>
+        <PlayerArea
+          player={gameState.players[1]}
+          playerIndex={1}
+          currentPlayer={gameState.currentPlayer}
+          gameWinner={gameState.gameWinner}
+          currentlySelectedCard={currentlySelectedCardInfo}
+          onSelectCard={handleSelectCard}
+          onAttemptMove={attemptMove}
+        />
+      </div>
+      </div>
+      </div>
   );
 }

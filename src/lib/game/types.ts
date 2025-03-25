@@ -12,6 +12,7 @@ export interface Card {
     drawPile: Card[];
     hand: Card[];
     discardPile: Card[];
+    isActive: boolean;
   }
   
   export interface GameState {

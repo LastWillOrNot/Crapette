@@ -1,5 +1,6 @@
 import React from "react";
 import { CardZone } from "./CardZone";
+import { CardZoneHand } from "./CardZoneHand";
 import { Player,SelectedCardInfo,  Card, CardSource } from "@/lib/game/types";
 
 interface PlayerAreaProps {
@@ -7,6 +8,7 @@ interface PlayerAreaProps {
     drawPile: Card[];
     hand: Card[];
     discardPile: Card[];
+    isActive: boolean;
   };
   playerIndex: number;
   currentPlayer?: number;
@@ -30,10 +32,11 @@ export function PlayerArea({
   onAttemptMove
 }: PlayerAreaProps) {
   const isActivePlayer = currentPlayer === playerIndex + 1;
+  console.log(`currentlySelectedCard ${currentlySelectedCard}`);
 
   return (
-    <div className="flex flex-col items-center">
-      <h2 className="text-xl mb-2">Joueur {playerIndex + 1}</h2>
+    <div className={`p-4 rounded-lg w-full max-w-3xl ${player.isActive ? "bg-yellow-300" : "bg-gray-300"}`}>
+      <h2 className="text-center font-bold">Joueur {playerIndex + 1}</h2>
 
       {/* Zone Pioche */}
       <CardZone
@@ -54,7 +57,7 @@ export function PlayerArea({
       />
 
       {/* Zone Main */}
-      <CardZone
+      <CardZoneHand
         title="Main"
         pile={player.hand}
         onClick={() => {
@@ -67,6 +70,8 @@ export function PlayerArea({
           }
         }}
         disabled={player.hand.length === 0 || gameWinner !== null || !isActivePlayer}
+        selected={currentlySelectedCard !== null}
+
       />
 
       {/* Zone Défausse */}

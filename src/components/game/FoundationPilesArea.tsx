@@ -15,7 +15,8 @@ export function FoundationPilesArea({
   onAttemptMove
 }: FoundationPilesAreaProps) {
   return (
-    <div className="col-span-2 flex justify-center mt-4">
+    <div className="w-full p-4">
+      <div className="w-full max-w-3xl p-6 my-4 bg-green-300 rounded-lg flex flex-wrap justify-center">
       <div className="grid grid-cols-4 gap-4">
         {sharedFoundationPiles.map((pile, index) => (
           <CardZone
@@ -27,6 +28,7 @@ export function FoundationPilesArea({
           />
         ))}
       </div>
+    </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React from "react";
-import { CardZone } from "./CardZone";
+//import { CardZone } from "./CardZone";
 import { Card, SelectedCardInfo } from "@/lib/game/types";
+import { CardZoneList } from "./CardZoneList";
 
 interface SharedPilesAreaProps {
   sharedPiles: Card[][];
@@ -19,10 +20,10 @@ export function SharedPilesArea({
   onAttemptMove
 }: SharedPilesAreaProps) {
   return (
-    <div className="col-span-2 flex justify-center mt-4">
+    <div className="w-full max-w-3xl p-6 my-4 bg-green-300 rounded-lg flex flex-wrap justify-center">
       <div className="grid grid-cols-4 gap-4">
         {sharedPiles.map((pile, index) => (
-          <CardZone
+          <CardZoneList
             key={index}
             title={`Pile ${index + 1}`}
             pile={pile}
