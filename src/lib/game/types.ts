@@ -1,6 +1,5 @@
-
 export type CardSource = 
-| { type: 'shared'; index: number }
+| { type: 'shared'; index: number; cardIndex: number }
 | { type: 'player'; zone: 'hand' | 'drawPile' | 'discardPile'; playerIndex: number };
 
 export interface Card {
@@ -22,6 +21,7 @@ export interface Card {
     sharedFoundationPiles: Card[][];
     currentPlayer?: number;
     gameWinner: number | null;
+    selectedCard: SelectedCardInfo | null;
   }
   
   export interface SelectedCardInfo {

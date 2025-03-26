@@ -1,21 +1,21 @@
 import { RED, CARD_VALUES, SUITS, SUITS_LETTERS, LIBERTY_DEGREE } from './constants';
-import { Card as CardType } from "./types";
+import { Card } from "./types";
 
-export function areCardsConsecutive(card1: CardType, card2: CardType) {
+export function areCardsConsecutive(card1: Card, card2: Card) {
   const index1 = CARD_VALUES.indexOf(card1.value);
   const index2 = CARD_VALUES.indexOf(card2.value);
   console.log(`ArecardConsecutive  ${index1}  avec ${index2}`);
   return Math.abs(index1 - index2) === 1;
 }
 
-export function areNextCardInferior(card1: CardType, card2: CardType) {
+export function areNextCardInferior(card1: Card, card2: Card) {
   const index1 = CARD_VALUES.indexOf(card1.value);
   const index2 = CARD_VALUES.indexOf(card2.value);
   console.log(`areNextCardInferior  ${index1}  avec ${index2}`);
   return index1 - index2 === 1;
 }
 
-export function areNextCardSuperior(card1: CardType, card2: CardType) {
+export function areNextCardSuperior(card1: Card, card2: Card) {
   let index1;
   if (card1.value === 'A' && card2.value === '2') { return true; } else {
     const index1 = CARD_VALUES.indexOf(card1.value);
@@ -24,40 +24,40 @@ export function areNextCardSuperior(card1: CardType, card2: CardType) {
   };
 }
 
-export function areCardsColorDifferent(card1: CardType, card2: CardType) {
+export function areCardsColorDifferent(card1: Card, card2: Card) {
   console.log(`areCardsColorDifferent  ${RED.includes(card1.suit)}  avec ${RED.includes(card2.suit)}`);
   return RED.includes(card1.suit) !== RED.includes(card2.suit);
 }
 
-export function compareSuitsCards(card1: CardType, card2: CardType) {
+export function compareSuitsCards(card1: Card, card2: Card) {
   const index1 = CARD_VALUES.indexOf(card1.value);
   const index2 = CARD_VALUES.indexOf(card2.value);
   if (index1 !== index2) return index1 - index2;
   return SUITS.indexOf(card1.suit) - SUITS.indexOf(card2.suit);
 }
 
-export function canPlaceOnFoundation(card: CardType, pile: CardType[]) {
+export function canPlaceOnFoundation(card: Card, pile: Card[]) {
   if (pile.length === 0) return card.value === 'A';
   const topCard = pile[pile.length - 1];
   console.log(`Comparaison de ${card.value} ${card.suit} avec ${topCard.value} ${topCard.suit}`);
   return card.suit === topCard.suit && areNextCardSuperior(topCard, card);
 }
 
-export function canPlaceOnShared(card: CardType, pile: CardType[]) {
+export function canPlaceOnShared(card: Card, pile: Card[]) {
   if (pile.length === 0) return true;
   const topCard = pile[pile.length - 1];
   return areCardsColorDifferent(topCard, card) &&
     areNextCardInferior(topCard, card);
 }
 
-export function canPlaceOnDrawPile(card: CardType, pile: CardType[]) {
+export function canPlaceOnDrawPile(card: Card, pile: Card[]) {
   if (pile.length === 0) return false;
   const topCard = pile[pile.length - 1];
   return !areCardsColorDifferent(topCard, card) &&
     areCardsConsecutive(topCard, card);
 }
 
-export function canPlaceOnDiscard(card: CardType, pile: CardType[]) {
+export function canPlaceOnDiscard(card: Card, pile: Card[]) {
   console.log(`Comparaison de ${card.value} ${card.suit} avec ${pile[pile.length - 1].value} ${pile[pile.length - 1].suit}`);
   if (pile.length === 0) return false;
   const topCard = pile[pile.length - 1];
@@ -71,7 +71,7 @@ export function lettersFromSuits(suit: string) {
 }
 
 // Nombre d'espaces vides dans les piles (partagées)
-export function countSpacePlace(pile: CardType[][]) {
+export function countSpacePlace(pile: Card[][]) {
   let SpacePlaceCount = 0;
   for (let i = 0; i < 8; i++) {
     if (pile[i].length === 0) {
@@ -83,7 +83,7 @@ export function countSpacePlace(pile: CardType[][]) {
 }
 
 // Nombre de cartes déplaçables dans les piles (partagées)
-export function countMoveableCard(pile: CardType[][]) {
+export function countMoveableCard(pile: Card[][]) {
   let MoveableCardCount = LIBERTY_DEGREE.indexOf(countSpacePlace(pile));
   console.log(`MoveableCardCount ${MoveableCardCount}`);
   return MoveableCardCount;

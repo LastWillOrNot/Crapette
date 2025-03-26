@@ -77,7 +77,7 @@ export function PlayerArea({
       {/* Zone Défausse */}
       <CardZone
   //      title="Défausse"
-        pile={player.discardPile}
+          pile={player.discardPile}
         onClick={() => {
           if (currentlySelectedCard) {
             onAttemptMove("discard", null, playerIndex + 1);

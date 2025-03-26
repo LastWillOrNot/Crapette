@@ -4,4 +4,4 @@ export const CARD_VALUES: string[]  = ["2", "3", "4", "5", "6", "7", "8", "9", "
 //export const CARD_VALUES = ["2", "3", "4", "5", "6", "7", "A"];
 
 export const RED:string[]  = ["♥️", "♦️"];
-export const LIBERTY_DEGREE:number[] =[1,2,4,8,13]
+export const LIBERTY_DEGREE:number[] =[1,2,4,8,13,13,13]
