@@ -8,7 +8,10 @@ interface SharedPilesAreaProps {
   gameWinner: number | null;
   currentlySelectedCard: SelectedCardInfo | null;
   onSelectCard: (source: { type: 'shared'; index: number }) => void;
+  onSelectGroupCard: (source: { type: 'shared'; index: number}) => void;
   onAttemptMove: (zone: string, index: number | null, playerTarget: number | null) => void;
+  onAttemptGroupMove: (zone: string, index: number | null, playerTarget: number | null) => void;
+  
 }
 
 
@@ -17,7 +20,9 @@ export function SharedPilesArea({
   gameWinner,
   currentlySelectedCard,
   onSelectCard,
-  onAttemptMove
+  onSelectGroupCard,
+  onAttemptMove,
+  onAttemptGroupMove
 }: SharedPilesAreaProps) {
   return (
     <div className="w-full max-w-3xl p-6 my-4 bg-green-300 rounded-lg flex flex-wrap justify-center">
@@ -27,14 +32,19 @@ export function SharedPilesArea({
             key={index}
             title={`Pile ${index + 1}`}
             pile={pile}
-              onClick={() => {
-                if (!currentlySelectedCard) {
-                // Si aucune carte sélectionnée -> sélectionner la carte du dessus
-                onSelectCard({ type: 'shared', index });
+            onClick={(cardindex) => {
+              if (!currentlySelectedCard) {
+                if (cardindex === undefined) {
+                  onSelectCard({ type: 'shared', index });
+                } else {
+                  onSelectGroupCard({ type: 'shared', index });
                 }
-              else if (currentlySelectedCard) {
-                // Si carte déjà sélectionnée -> tenter le déplacement
-                onAttemptMove('shared', index, null);
+              } else {
+                if (cardindex === undefined) {
+                  onAttemptMove('shared', index, null);
+                } else {
+                  onAttemptGroupMove('shared', index, null);
+                }
               }
             }}
             disabled={gameWinner !== null}

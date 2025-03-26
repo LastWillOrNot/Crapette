@@ -13,6 +13,7 @@ export interface Card {
     hand: Card[];
     discardPile: Card[];
     isActive: boolean;
+    isHandSelected:boolean;
   }
   
   export interface GameState {
@@ -26,6 +27,7 @@ export interface Card {
   export interface SelectedCardInfo {
     card: Card;
     source: CardSource;
+    cardIndex: number | null
   }
 
   export interface GameContextType {

@@ -40,7 +40,7 @@ export function PlayerArea({
 
       {/* Zone Pioche */}
       <CardZone
-        title="Pioche"
+//        title="Pioche"
         pile={player.drawPile}
         onClick={() => {
           if (!currentlySelectedCard && player.drawPile.length > 0) {
@@ -58,7 +58,7 @@ export function PlayerArea({
 
       {/* Zone Main */}
       <CardZoneHand
-        title="Main"
+//        title="Main"
         pile={player.hand}
         onClick={() => {
           if (!currentlySelectedCard && player.hand.length > 0 && isActivePlayer) {
@@ -70,13 +70,13 @@ export function PlayerArea({
           }
         }}
         disabled={player.hand.length === 0 || gameWinner !== null || !isActivePlayer}
-        selected={currentlySelectedCard !== null}
+        handSelected={isActivePlayer && currentlySelectedCard !== null}
 
       />
 
       {/* Zone Défausse */}
       <CardZone
-        title="Défausse"
+  //      title="Défausse"
         pile={player.discardPile}
         onClick={() => {
           if (currentlySelectedCard) {

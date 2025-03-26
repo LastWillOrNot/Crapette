@@ -1,5 +1,4 @@
-import { M_PLUS_1 } from 'next/font/google';
-import { RED, CARD_VALUES, SUITS, SUITS_LETTERS } from './constants';
+import { RED, CARD_VALUES, SUITS, SUITS_LETTERS, LIBERTY_DEGREE } from './constants';
 import { Card as CardType } from "./types";
 
 export function areCardsConsecutive(card1: CardType, card2: CardType) {
@@ -69,4 +68,23 @@ export function canPlaceOnDiscard(card: CardType, pile: CardType[]) {
 //Renvoi la valeur de la carte
 export function lettersFromSuits(suit: string) {
   return SUITS_LETTERS[SUITS.indexOf(suit)];
+}
+
+// Nombre d'espaces vides dans les piles (partagées)
+export function countSpacePlace(pile: CardType[][]) {
+  let SpacePlaceCount = 0;
+  for (let i = 0; i < 8; i++) {
+    if (pile[i].length === 0) {
+      SpacePlaceCount++;
+    }
+  }
+  console.log(`SpacePlaceCount ${SpacePlaceCount}`);
+  return SpacePlaceCount;
+}
+
+// Nombre de cartes déplaçables dans les piles (partagées)
+export function countMoveableCard(pile: CardType[][]) {
+  let MoveableCardCount = LIBERTY_DEGREE.indexOf(countSpacePlace(pile));
+  console.log(`MoveableCardCount ${MoveableCardCount}`);
+  return MoveableCardCount;
 }
