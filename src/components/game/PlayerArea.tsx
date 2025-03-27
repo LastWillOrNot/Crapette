@@ -12,7 +12,7 @@ interface PlayerAreaProps {
   };
   playerIndex: number;
   currentPlayer?: number;
-  gameWinner: number | null;
+  gameWinner: number;
   currentlySelectedCard: SelectedCardInfo | null;
   onSelectCard: (source: CardPosition) => void;
   onAttemptMove: (target: CardPosition) => void;
@@ -48,11 +48,11 @@ export function PlayerArea({
             onAttemptMove({ 
               type: 'player',
               zone: 'drawPile',
-              playerIndex: playerIndex + 1
+              playerIndex: playerIndex 
             });
           }
         }}
-        disabled={player.drawPile.length === 0 || gameWinner === null }
+        disabled={player.drawPile.length === 0 || gameWinner !== 0 }
       />
 
       {/* Zone Main */}
@@ -68,7 +68,7 @@ export function PlayerArea({
             });
           }
         }}
-        disabled={player.hand.length === 0 || gameWinner !== null || !isActivePlayer}
+        disabled={player.hand.length === 0 || gameWinner !== 0 || !isActivePlayer}
         handSelected={isActivePlayer && currentlySelectedCard !== null}
 
       />
@@ -82,10 +82,10 @@ export function PlayerArea({
             onAttemptMove({
               type: 'player',
               zone: 'discard',
-              playerIndex: playerIndex +1  })   
+              playerIndex: playerIndex   })   
           }
         }}
-        disabled={gameWinner === null}
+        disabled={gameWinner !== 0}
       />
     </div>
   );

@@ -83,7 +83,7 @@ export default function CrapetteGame() {
           console.log(`Tentative de déplacement de ${card.value} ${card.suit} vers la DrawPile du Joueur ${targetZone.playerIndex}`);
         }
         else if (targetZone.zone === 'discard') {
-          console.log(`Tentative de déplacement vers la défausse du joueur ${targetZone.playerIndex}`);
+          console.log(`Tentative de déplacement de ${card.value} ${card.suit} vers la défausse du joueur ${targetZone.playerIndex}`);
           if (targetZone.playerIndex === gameState.currentPlayer) {
             // Permettre de placer n'importe quelle carte sur sa défausse
             moveIsValid = true
@@ -108,21 +108,15 @@ export default function CrapetteGame() {
       } else {
         dispatch({ type: 'CANCEL_SELECTION' }); // Annuler la sélection si invalide
       }
-    };
-
-
-
         // Changer de joueur si la carte est placée sur sa propre défausse
-    //    if (targetZone.type === 'player') {
-    //      if (targetZone.playerIndex === gameState.currentPlayer) {
-    //        dispatch({
-    //          type: 'SWITCH_PLAYER'
-    //        });
-    //      }
-    //    };
-
-    //  }
-    ;
+      if (targetZone.type === 'player') {
+        if (targetZone.playerIndex === gameState.currentPlayer) {
+          dispatch({
+            type: 'SWITCH_PLAYER'
+          });
+        }
+      };
+    };
 
 
     // Mise à jour de l'état du joueur actif
@@ -133,7 +127,7 @@ export default function CrapetteGame() {
 
 
     // Après le déplacement de la dernière carte de la main, les cartes de la défausse sont déplacées dans la main
-    useEffect(() => {
+    const isRequiredToRefillTheHand = () => {
       if (gameState.currentPlayer && gameState.players[gameState.currentPlayer - 1].hand.length === 0
         && gameState.players[gameState.currentPlayer - 1].discardPile.length > 0
       ) {
@@ -142,25 +136,22 @@ export default function CrapetteGame() {
           playerIndex: gameState.currentPlayer - 1
         });
       }
-    },
-      [gameState.players[gameState.currentPlayer ? gameState.currentPlayer - 1 : 0]?.hand]);
+    };
 
     // Détection du gagnant
-    useEffect(() => {
-      const winner = gameState.players.findIndex(player =>
+    const winner = () => {
+       gameState.players.findIndex(player =>
         player.drawPile.length === 0 &&
         player.hand.length === 0 &&
         player.discardPile.length === 0
       );
-
+      console.log (`Identifiant du gagnant ${winner}`)
       if (winner !== -1) {
         dispatch({
           type: 'SET_WINNER',
-          playerIndex: winner + 1
+          playerIndex: winner 
         });
-      }
-    },
-      [gameState.players]);
+      }};
 
   return (
     <div>

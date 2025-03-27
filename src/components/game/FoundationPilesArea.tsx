@@ -4,7 +4,7 @@ import { CardItem, CardPosition } from "@/lib/game/types";
 
 interface FoundationPilesAreaProps {
   sharedFoundationPiles: CardItem[][];
-  gameWinner: number | null;
+  gameWinner: number;
   onAttemptMove: (target: CardPosition) => void;
 }
 
@@ -25,7 +25,7 @@ export function FoundationPilesArea({
               type: 'foundation',
               index: index}
             )}
-            disabled={gameWinner === null}
+            disabled={gameWinner !== 0}
           />
         ))}
       </div>

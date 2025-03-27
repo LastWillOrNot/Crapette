@@ -5,7 +5,7 @@ import { CardZoneList } from "./CardZoneList";
 
 interface SharedPilesAreaProps {
   sharedPiles: CardItem[][];
-  gameWinner: number | null;
+  gameWinner: number;
   currentlySelectedCard: SelectedCardInfo | null;
   onSelectCard: (source: CardPosition) => void;
   onAttemptMove: (target: CardPosition) => void;
@@ -44,7 +44,7 @@ export function SharedPilesArea({
                   });
               }
             }}
-            disabled={gameWinner === null}
+            disabled={gameWinner !== 0}
           />
         ))}
       </div>

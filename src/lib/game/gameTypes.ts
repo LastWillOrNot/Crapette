@@ -58,10 +58,10 @@ export const initialState: GameState = {
    }
 
   // Gestion de la main
-  | {type: 'SET_HAND_SELECTED';
-      playerIndex: number;
-      isSelected: boolean;
-    }
+//  | {type: 'SET_HAND_SELECTED';
+//      playerIndex: number;
+//      isSelected: boolean;
+//    }
   
   // Annulation de la sélection
   | { type: 'CANCEL_SELECTION'; }

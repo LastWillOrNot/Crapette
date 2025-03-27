@@ -1,8 +1,7 @@
 import {Player, GameState, CardItem, CardPosition, SelectedCardInfo  } from "@/lib/game/types";
 import {initialState, GameAction} from "@/lib/game/gameTypes";
 import { canPlaceOnFoundation, canPlaceOnShared, canPlaceOnDrawPile, canPlaceOnDiscard, countMoveableCard } from "@/lib/game/rules";
-
-
+import { cp } from "fs";
 
 export function gameReducer(gameState: GameState, action: GameAction): GameState {
     switch (action.type) {
@@ -58,21 +57,23 @@ export function gameReducer(gameState: GameState, action: GameAction): GameState
             player.drawPile = player.drawPile.slice(0, -1);
           }
         }
-      
+
         // 2. Ajouter les cartes à la cible
         if (targetZone.type === 'foundation') {
-          newState.sharedFoundationPiles[targetZone.index].push(...cardsToMove);
+          console.log (`Targetzone.index ${targetZone.index}`)
+          newState.sharedFoundationPiles[targetZone.index].push(...cardsToMove.reverse());
         } 
         else if (targetZone.type === 'shared') {
-          newState.sharedPiles[targetZone.index].push(...cardsToMove);
+          newState.sharedPiles[targetZone.index].push(...cardsToMove.reverse());
         } 
         else if (targetZone.type === 'player') {
           const player = newState.players[targetZone.playerIndex];
+          console.log (`Targetzone.playerIndex ${targetZone.playerIndex }`)
           if (targetZone.zone === 'discard') {
-            player.discardPile.push(...cardsToMove);
+            player.discardPile.push(...cardsToMove.reverse());
           } 
           else if (targetZone.zone === 'drawPile') {
-            player.drawPile.push(...cardsToMove);
+            player.drawPile.push(...cardsToMove.reverse());
           }
         }
       
@@ -98,20 +99,21 @@ export function gameReducer(gameState: GameState, action: GameAction): GameState
           currentPlayer: gameState.currentPlayer === 1 ? 2 : 1,
           players: gameState.players.map(player => ({
             ...player,
-            isActive: !player.isActive
+            isActive: !player.isActive,
+            isHandSelected:false
           }))
         };
   
       // Gestion de la main
-      case 'SET_HAND_SELECTED':
-        return {
-          ...gameState,
-          players: gameState.players.map((player, i) => 
-            i === action.playerIndex
-              ? { ...player, isHandSelected: action.isSelected }
-              : player
-          )
-        };
+    //  case 'SET_HAND_SELECTED':
+    //    return {
+    //      ...gameState,
+    //      players: gameState.players.map((player, i) => 
+    //        i === action.playerIndex
+    //          ? { ...player, isHandSelected: true }
+    //          : player
+    //      )
+    //    };
   
       // Fin de jeu
       case 'SET_WINNER':
