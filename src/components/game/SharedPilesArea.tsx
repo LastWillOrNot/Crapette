@@ -1,14 +1,14 @@
 import React from "react";
 //import { CardZone } from "./CardZone";
-import { Card, SelectedCardInfo } from "@/lib/game/types";
+import { CardItem, SelectedCardInfo, CardPosition } from "@/lib/game/types";
 import { CardZoneList } from "./CardZoneList";
 
 interface SharedPilesAreaProps {
-  sharedPiles: Card[][];
+  sharedPiles: CardItem[][];
   gameWinner: number | null;
   currentlySelectedCard: SelectedCardInfo | null;
-  onSelectCard: (source: { type: 'shared'; index: number }) => void;
-  onAttemptMove: (zone: string, index: number | null, playerTarget: number | null) => void;
+  onSelectCard: (source: CardPosition) => void;
+  onAttemptMove: (target: CardPosition) => void;
 }
 
 
@@ -30,13 +30,21 @@ export function SharedPilesArea({
             onClick={(cardIndex) => {
 // si aucune carte n'est déjà sélectionnée, alors la carte est sélectionnée
               if (!currentlySelectedCard) {
-                  onSelectCard({ type: 'shared', index });
+                  onSelectCard({
+                    type:'shared',
+                    index: index,
+                    cardIndex: cardIndex ?? 0
+                  });
               } else {
 // sinon, on tente un déplacement
-                  onAttemptMove('shared', index, null);
+                  onAttemptMove({
+                     type: 'shared',
+                     index: index,
+                     cardIndex: 0
+                  });
               }
             }}
-            disabled={gameWinner !== null}
+            disabled={gameWinner === null}
           />
         ))}
       </div>

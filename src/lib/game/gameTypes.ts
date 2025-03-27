@@ -1,4 +1,4 @@
-import {GameState, Player, Card, CardSource} from "@/lib/game/types";
+import {GameState, Player, CardItem, CardPosition} from "@/lib/game/types";
 
 export const initialState: GameState = {
     players: [
@@ -20,7 +20,7 @@ export const initialState: GameState = {
     sharedPiles: Array(8).fill([]),
     sharedFoundationPiles: Array(8).fill([]),
     currentPlayer: undefined,
-    gameWinner: null,
+    gameWinner: 0,
     selectedCard: null
   };
 
@@ -30,27 +30,23 @@ export const initialState: GameState = {
   | {
       type: 'INIT_GAME';
       players: [Player, Player];
-      sharedPiles: Card[][];
+      sharedPiles: CardItem[][];
       firstPlayer: number;
     }
   
   // Sélection de carte
   | {
       type: 'SELECT_CARD';
-      playerIndex?: number;
-      card: Card;
-      source: CardSource;
-      cardIndex: number | null;
+      card: CardItem;
+      source: CardPosition;
     }
   
   // Mouvement de carte
   | {
       type: 'MOVE_CARD';
-      target: {
-        zone: 'shared' | 'foundation' | 'drawPile' | 'discard';
-        index?: number;
-        playerIndex?: number;
-      };
+      source: CardPosition;       // Position source (ex: { type: 'player', zone: 'hand', playerIndex: 0 })
+      targetZone: CardPosition;   // Position cible (ex: { type: 'shared', index: 2 })
+      cardsToMove: CardItem[];    // Cartes à déplacer (ex: [{ suit: 'hearts', value: 'A' }])
     }
   
   // Changement de joueur
@@ -67,8 +63,11 @@ export const initialState: GameState = {
       isSelected: boolean;
     }
   
+  // Annulation de la sélection
+  | { type: 'CANCEL_SELECTION'; }
+
   // Fin de jeu
   | { type: 'SET_WINNER';
      playerIndex: number
-     };
-    
+ 
+};    

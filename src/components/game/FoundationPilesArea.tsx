@@ -1,12 +1,11 @@
 import React from "react";
 import { CardZone } from "./CardZone";
-import { Card, SelectedCardInfo } from "@/lib/game/types";
-
+import { CardItem, CardPosition } from "@/lib/game/types";
 
 interface FoundationPilesAreaProps {
-  sharedFoundationPiles: Card[][];
+  sharedFoundationPiles: CardItem[][];
   gameWinner: number | null;
-  onAttemptMove: (zone: string, index: number | null, playerTarget: number | null) => void;
+  onAttemptMove: (target: CardPosition) => void;
 }
 
 export function FoundationPilesArea({
@@ -21,10 +20,12 @@ export function FoundationPilesArea({
         {sharedFoundationPiles.map((pile, index) => (
           <CardZone
             key={index}
-            title={`Paquet ${index + 1}`}
             pile={pile}
-            onClick={() => onAttemptMove('foundation', index, null)}
-            disabled={gameWinner !== null}
+            onClick={() => onAttemptMove({
+              type: 'foundation',
+              index: index}
+            )}
+            disabled={gameWinner === null}
           />
         ))}
       </div>

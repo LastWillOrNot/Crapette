@@ -1,25 +1,21 @@
 import React from "react";
 import { CardZone } from "./CardZone";
 import { CardZoneHand } from "./CardZoneHand";
-import { Player,SelectedCardInfo,  Card, CardSource } from "@/lib/game/types";
+import { CardItem, CardPosition,SelectedCardInfo } from "@/lib/game/types";
 
 interface PlayerAreaProps {
   player: {
-    drawPile: Card[];
-    hand: Card[];
-    discardPile: Card[];
+    drawPile: CardItem[];
+    hand: CardItem[];
+    discardPile: CardItem[];
     isActive: boolean;
   };
   playerIndex: number;
   currentPlayer?: number;
   gameWinner: number | null;
-  currentlySelectedCard: { card: Card; source: CardSource } | null;
-  onSelectCard: (source: CardSource) => void;
-  onAttemptMove: (
-    targetZone: "foundation" | "shared" | "discard" | "drawPile",
-    index: number | null,
-    playerTarget: number | null
-  ) => void;
+  currentlySelectedCard: SelectedCardInfo | null;
+  onSelectCard: (source: CardPosition) => void;
+  onAttemptMove: (target: CardPosition) => void;
 }
 
 export function PlayerArea({
@@ -32,7 +28,6 @@ export function PlayerArea({
   onAttemptMove
 }: PlayerAreaProps) {
   const isActivePlayer = currentPlayer === playerIndex + 1;
-  console.log(`currentlySelectedCard ${currentlySelectedCard}`);
 
   return (
     <div className={`p-4 rounded-lg w-full max-w-3xl ${player.isActive ? "bg-yellow-300" : "bg-gray-300"}`}>
@@ -50,10 +45,14 @@ export function PlayerArea({
               playerIndex,
             });
           } else if (currentlySelectedCard) {
-            onAttemptMove("drawPile", null, playerIndex + 1);
+            onAttemptMove({ 
+              type: 'player',
+              zone: 'drawPile',
+              playerIndex: playerIndex + 1
+            });
           }
         }}
-        disabled={player.drawPile.length === 0 || gameWinner !== null }
+        disabled={player.drawPile.length === 0 || gameWinner === null }
       />
 
       {/* Zone Main */}
@@ -80,10 +79,13 @@ export function PlayerArea({
           pile={player.discardPile}
         onClick={() => {
           if (currentlySelectedCard) {
-            onAttemptMove("discard", null, playerIndex + 1);
+            onAttemptMove({
+              type: 'player',
+              zone: 'discard',
+              playerIndex: playerIndex +1  })   
           }
         }}
-        disabled={gameWinner !== null}
+        disabled={gameWinner === null}
       />
     </div>
   );

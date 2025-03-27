@@ -1,10 +1,10 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card as CardType } from "@/lib/game/types";
+import { CardItem} from "@/lib/game/types";
 import { lettersFromSuits } from "@/lib/game/rules";
 
 interface CardZoneProps {
-  pile: CardType[];
+  pile: CardItem[];
   onClick: () => void;
   disabled: boolean;
 }

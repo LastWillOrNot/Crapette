@@ -1,7 +1,7 @@
 import { createShuffledDeck } from "@/lib/game/cardUtils";
 import { compareSuitsCards } from "@/lib/game/rules";
-import { Card, CardSource} from "@/lib/game/types";
-import { GameAction} from "@/lib/game/gameTypes";
+import { CardItem, CardPosition} from "@/lib/game/types";
+import { GameAction, initialState} from "@/lib/game/gameTypes";
 
 
 // Initialisation
@@ -28,32 +28,30 @@ export const initGame = () => {
   
   // Sélection de carte
   export const selectCard = (
-    card: Card,
-    source: CardSource,
-    cardIndex: number | null,
-    playerIndex?: number
+    card: CardItem,
+    source: CardPosition
   ): GameAction => ({
     type: 'SELECT_CARD',
     card,
-    source,
-    cardIndex,
-    playerIndex
+    source
   });
   
   // Mouvement de carte
   export const moveCard = (
-    targetZone: 'shared' | 'foundation' | 'drawPile' | 'discard',
-    targetIndex?: number,
-    targetPlayer?: number
+    source: CardPosition,    
+    targetZone: CardPosition,
+    cardsToMove: CardItem[]
   ): GameAction => ({
     type: 'MOVE_CARD',
-    target: {
-      zone: targetZone,
-      index: targetIndex,
-      playerIndex: targetPlayer
-    }
+    source,       
+    targetZone,   
+    cardsToMove
   });
-  
+
+  export const cancelSelection = (): GameAction => ({ 
+    type: 'CANCEL_SELECTION' 
+  });
+
   // Autres actions
   export const switchPlayer = (): GameAction => ({ 
     type: 'SWITCH_PLAYER' 

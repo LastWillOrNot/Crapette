@@ -1,12 +1,12 @@
 import { SUITS, CARD_VALUES } from './constants';
-import { Card as CardType } from "./types";
+import { CardItem } from "./types";
 
-export function shuffleDeck(deck: CardType[]) {
+export function shuffleDeck(deck: CardItem[]) {
   return deck.sort(() => Math.random() - 0.5);
 }
 
 export function createShuffledDeck() {
-  const newDeck: CardType[] = [];
+  const newDeck: CardItem[] = [];
   SUITS.forEach((suit) => {
     CARD_VALUES.forEach((value) => {
       newDeck.push({ suit, value });

@@ -1,33 +1,33 @@
-export type CardSource = 
+export type CardPosition = 
 | { type: 'shared'; index: number; cardIndex: number }
-| { type: 'player'; zone: 'hand' | 'drawPile' | 'discardPile'; playerIndex: number };
+| { type: 'foundation'; index: number }
+| { type: 'player'; zone: 'hand' | 'drawPile' | 'discard'; playerIndex: number };
 
-export interface Card {
+export interface CardItem {
     suit: string;
     value: string;
   }
    
   export interface Player {
-    drawPile: Card[];
-    hand: Card[];
-    discardPile: Card[];
+    drawPile: CardItem[];
+    hand: CardItem[];
+    discardPile: CardItem[];
     isActive: boolean;
     isHandSelected:boolean;
   }
   
   export interface GameState {
     players: Player[];
-    sharedPiles: Card[][];
-    sharedFoundationPiles: Card[][];
+    sharedPiles: CardItem[][];
+    sharedFoundationPiles: CardItem[][];
     currentPlayer?: number;
-    gameWinner: number | null;
+    gameWinner: number | 1 | 2;
     selectedCard: SelectedCardInfo | null;
   }
   
   export interface SelectedCardInfo {
-    card: Card;
-    source: CardSource;
-    cardIndex: number | null
+    cardItem: CardItem;
+    position: CardPosition
   }
 
   export interface GameContextType {

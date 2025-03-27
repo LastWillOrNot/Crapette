@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card as CardType } from "@/lib/game/types";
+import { CardItem  } from "@/lib/game/types";
 import { lettersFromSuits } from "@/lib/game/rules";
 
 interface CardZoneListProps {
   title: string;
-  pile: CardType[];
+  pile: CardItem[];
   onClick: (cardIndex?: number) => void; // Modifié pour accepter un index de carte
   disabled: boolean;
 }

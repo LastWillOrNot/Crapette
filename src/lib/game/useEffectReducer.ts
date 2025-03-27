@@ -1,5 +1,7 @@
-import {Player, GameState, Card, CardSource, SelectedCardInfo  } from "@/lib/game/types";
+import {Player, GameState, CardItem, CardPosition, SelectedCardInfo  } from "@/lib/game/types";
 import {initialState, GameAction} from "@/lib/game/gameTypes";
+import { canPlaceOnFoundation, canPlaceOnShared, canPlaceOnDrawPile, canPlaceOnDiscard, countMoveableCard } from "@/lib/game/rules";
+
 
 
 export function gameReducer(gameState: GameState, action: GameAction): GameState {
@@ -17,33 +19,78 @@ export function gameReducer(gameState: GameState, action: GameAction): GameState
         };
   
       // Sélection de carte
-      case 'SELECT_CARD':
-        return {
-          ...gameState,
-          players: action.playerIndex !== undefined
-            ? gameState.players.map((player, i) => 
-                i === action.playerIndex
-                  ? { ...player, isHandSelected: action.source.type === 'player' &&
-                     action.source.zone === 'hand' }
-                  : player
-              )
-            : gameState.players
-        };
+
+        case 'SELECT_CARD':
+          return {
+            ...gameState,
+            selectedCard: {
+              cardItem: action.card,
+              position: action.source
+            },
+            players: action.source.type === 'player'
+              ? gameState.players.map((player, i) => 
+                  i === action.source.playerIndex
+                    ? { ...player, isHandSelected: action.source.zone === 'hand' }
+                    : player
+                )
+              : gameState.players
+          };
   
       // Mouvement de carte
       case 'MOVE_CARD': {
-        const { source } = selectedCard;
-        const card = gameState.selectedCard;
-              
+        const { source, targetZone, cardsToMove } = action;
+        const newState = { ...gameState };
+      
+        // 1. Retirer les cartes de la source
+        if (source.type === 'shared') {
+          newState.sharedPiles[source.index] = newState.sharedPiles[source.index].slice(
+            0,
+            -cardsToMove.length // Retire les N dernières cartes
+          );
+        } 
+        else if (source.type === 'player') {
+          const player = newState.players[source.playerIndex];
+          if (source.zone === 'hand') {
+            player.hand = player.hand.slice(0, -1); // Retire la dernière carte
+            player.isHandSelected = true;
+          } 
+          else if (source.zone === 'drawPile') {
+            player.drawPile = player.drawPile.slice(0, -1);
+          }
+        }
+      
+        // 2. Ajouter les cartes à la cible
+        if (targetZone.type === 'foundation') {
+          newState.sharedFoundationPiles[targetZone.index].push(...cardsToMove);
+        } 
+        else if (targetZone.type === 'shared') {
+          newState.sharedPiles[targetZone.index].push(...cardsToMove);
+        } 
+        else if (targetZone.type === 'player') {
+          const player = newState.players[targetZone.playerIndex];
+          if (targetZone.zone === 'discard') {
+            player.discardPile.push(...cardsToMove);
+          } 
+          else if (targetZone.zone === 'drawPile') {
+            player.drawPile.push(...cardsToMove);
+          }
+        }
+      
+        // 3. Effacer la sélection et retourner le nouvel état
         return {
-          ...gameState,
-          players: newPlayers,
-          sharedPiles: newSharedPiles,
-          sharedFoundationPiles: newSharedFoundationPiles,
-          selectedCard: null
+          ...newState,
+          selectedCard: null,
         };
       }
   
+      // Annulation de la sélection
+      case 'CANCEL_SELECTION': {
+        return {
+          ...gameState,
+          selectedCard: null,
+        };
+      }
+
       // Changement de joueur
       case 'SWITCH_PLAYER':
         return {
@@ -94,8 +141,5 @@ export function gameReducer(gameState: GameState, action: GameAction): GameState
     }
   }
 
-function moveCardLogic(gameState: GameState, action: Extract<GameAction, { type: 'MOVE_CARD' }>): GameState {
-  
-  return newState;
-}
+
 
